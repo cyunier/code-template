@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Rutgers Categorization Experiment</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery-ui.min.js"></script>
+    <script src="../../jspsych/array.js"></script>
+        <script src="../../jspsych/jspsych.js"></script>
+        <script src="../../jspsych/jquery.min.js"></script>
+        <script src="../../jspsych/jquery-ui.min.js"></script>
+        <script src="../../jspsych/plugins/jspsych-text.js"></script>
+        <script src="../../jspsych/plugins/jspsych-survey-likert.js"></script>
+        <link href="../../jspsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <link href="../../jspsych/css/jquery-ui.css" rel="stylesheet" type="text/css"></link>
+
+  <script type="text/javascript">
+      img_A_Array = make_array("img_A_Array","img/ambig-gmm.txt");
+  </script>
+</head>
+<body>
+      <center> <div id="jspsych-target"></div></center>
+</body>
+
+<script>
+//MTURK INFO
+var turk_info = jsPsych.turk.turkInfo();
+var workerID = turk_info.workerId;
+// NUMBER OF TRIAL
+var numTrials = 25; 
+// SUBJECT ID
+var subject_id = Math.floor(Math.random()*100000);
+// QUESTIONS & SCALE
+var question_pool = ["Which category does this picture belong to?"];
+var scale = ["Category 1", "Category 2"];
+
+var gmmLike0 = ["img/gmmlike0/like0_pair1.jpg","img/gmmlike0/like0_pair2.jpg","img/gmmlike0/like0_pair3.jpg"];
+var gmmLike1 = ["img/gmmlike1/like1_pair1.jpg","img/gmmlike1/like1_pair2.jpg","img/gmmlike1/like1_pair3.jpg"];
+      
+var gmmlikeattn = ["img/gmmlikeattn/gmmattnlike0_pair1.jpg","img/gmmlikeattn/gmmattnlike0_pair2.jpg","img/gmmlikeattn/gmmattnlike0_pair3.jpg"];
+
+
+var allImagesRand = jsPsych.randomization.sample(img_A_Array, img_A_Array.length, false);
+// RANDOMIZATION EXAMPLARS
+// jsPsych.randomization.sample(array, sampleSize, withReplacement)
+var Like0Rand = jsPsych.randomization.sample(gmmLike0,1,false);
+var Like1Rand = jsPsych.randomization.sample(gmmLike1,1,false);
+// CHECK IMAGE NAMES
+//var likeName = Like0Rand[0];
+var gmmlike0Name = Like0Rand[0];
+var gmmlike1Name = Like1Rand[0];
+
+//var likeNum = parseInt(teach0Name[22]);
+//var Tattn = teachattn[likeNum-1];
+var likeNum = parseInt(gmmlike0Name[23]);
+var Lattn = gmmlikeattn[likeNum-1];
+var attention = new Array();
+//attention.push(Lattn);
+attention.push(Lattn);
+//var attentionRand = jsPsych.randomization.sample(attention,1,false);
+// ATTENTION
+//var attentionDisp = attentionRand[0];
+var attentionDisp = attention[0];
+
+// RANDOM NUMBER
+//x = 5, y = 20
+//Math.floor(Math.random() * ((y-x)+1) + x);
+var randNum = Math.floor(Math.random() * ((numTrials-5)-1) + 5);
+// EXPERIMENTAL (RANDOM) IMAGE ARRAY OF SIZE numTrials
+var expRandImgs = jsPsych.randomization.sample(allImagesRand, numTrials, false);
+expRandImgs[randNum] = attentionDisp;
+
+// CUSTOM DATA COLLECTION
+jsPsych.data.addProperties({
+// worker_id: workerID,
+// turk_info: turk_info,
+subject: subject_id,
+Cat0: gmmlike0Name,
+Cat1: gmmlike1Name,
+});
+
+var experiment = []; // empty array to hold trials
+var instructions_block = {
+  type: "text",
+  text: "<p>Thank you for agreeing to participate in our study." +
+      "For this survey you will be asked to view pictures from different categories. Your task will be to assign new images to these categories based only on looking at the images on the screen. Do not assign the new images based on how much they match, but rather on whether the new images belong to the same overall category. The survey is not timed, but most people finish in about 5 minutes. The survey will timeout after 15 minutes." +
+    "<p><strong>Pay close attention when choosing the image category as some incorrect decisions can cause your hit to be rejected.</strong></p></div>" +
+      "<p>Press any key to begin.</p>",
+  timing_post_trial: 2000
+};
+
+experiment.push(instructions_block);
+
+for(var i = 0; i < numTrials ; i++) {
+    var dispImgs = expRandImgs[i];
+    var likert_trial = {
+        type: 'survey-likert',
+        preamble:  '<table class="tg"><tbody><tr><th class="tg-yw4l"><p class="alignleft; font-size: 24px">CATEGORY 1</p><img src="'+gmmlike0Name+'" alt="" /></th><th class="tg-yw4l"><p class="alignleft; font-size: 24px">CATEGORY 2</p><img src="'+gmmlike1Name+'" alt="" /></th></tr><tr><td class="tg-yw4l" colspan="2"><center><img src="'+dispImgs+'" alt="" width="40%" height="40%" /></center></td></tr></tbody></table>',
+        questions: [question_pool],
+        labels: [scale],
+        data: { Displayed: dispImgs },
+    };
+    experiment.push(likert_trial);
+} // This ends the 'for' loop:
+
+
+
+  jsPsych.init({
+        display_element: $('#jspsych-target'),
+        // show_progress_bar: true,
+        timeline: experiment,
+        // fullscreen: true,
+        on_finish: function() {
+          $.ajax({
+          type: "POST",
+          url: "/experiment-data",
+          data: JSON.stringify(jsPsych.data.getData()),
+          contentType: "application/json"
+    })
+           .done(function() {
+           window.location.href = "finish";
+    })
+    .fail(function() {
+      alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+      window.location.href = "/";
+    })
+  }
+});
+
+</script>
+</html>

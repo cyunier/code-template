@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Rutgers Data Science Experiment</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery-ui.min.js"></script>
+    <script src="../../jspsych/array.js"></script>
+
+        <script src="../../jspsych/jspsych.js"></script>
+        <script src="../../jspsych/jquery.min.js"></script>
+        <script src="../../jspsych/jquery-ui.min.js"></script>
+        <script src="../../jspsych/plugins/jspsych-text.js"></script>
+        <script src="../../jspsych/plugins/jspsych-survey-likert.js"></script>
+
+        <link href="../../jspsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <link href="../../jspsych/css/jquery-ui.css" rel="stylesheet" type="text/css"></link>
+
+
+
+  <script type="text/javascript">
+      img_A_Array = make_array("img_A_Array","/img/img_A.txt");
+      img_B_Array = make_array("img_B_Array","/img/img_B.txt");
+  </script>
+
+   
+</head>
+<body>
+      <center> <img src="/img/indoors.png" width="50%" height="50%"> </center>
+      <center> <div id="jspsych-target"></div></center>
+</body>
+
+
+      
+
+
+
+<script> 
+var turk_info = jsPsych.turk.turkInfo();
+var workerID = turk_info.workerId; // the mturk_id
+
+ // Number of trials
+  var num_trials = 5;
+ // generate a random subject ID
+  var subject_id = Math.floor(Math.random()*100000);
+    
+  var question_pool = ["Which category does this picture belong to?"];          
+  var scale = ["Category 1", "Category 2"]; 
+      
+ // Tester image
+ var random_image_c = '/img/indoors.png';
+
+
+// Adding the subject's id to the program  
+jsPsych.data.addProperties({
+  worker_id: workerID,
+  turk_info: turk_info,
+  subject: subject_id,
+});
+    
+var experiment = []; // empty array to hold trials
+  for(var i = 0; i < num_trials ; i++) {  
+    var random_image_a = jsPsych.randomization.sample(img_A_Array, img_A_Array.length, false); 
+    var random_image_b = jsPsych.randomization.sample(img_B_Array, img_B_Array.length, false); 
+
+    var selected_images_a = random_image_a[i];  
+    var selected_images_b = random_image_b[i];   
+
+    var likert_trial_1 = { 
+        type: 'survey-likert', 
+        preamble: '<img src="'+selected_images_a+'" width="50%" height="50%"></img>', 
+        questions: [question_pool], 
+        labels: [scale], 
+        data: { correct_response: 'Yes' },        
+    }; 
+    var likert_trial_2 = { 
+        type: 'survey-likert', 
+        preamble: '<img src="'+selected_images_b+'" width="50%" height="50%"></img>', 
+        questions: [question_pool], 
+        labels: [scale], 
+        data: { correct_response: 'No' },        
+    }; 
+    var trial_pool = [likert_trial_1, likert_trial_2];
+    var random_trial = jsPsych.randomization.sample(trial_pool, 1, true)[0]; 
+
+
+
+    experiment.push(random_trial);
+    
+}
+  // Were you paying attention?
+    var likert_trial_3 = { 
+        type: 'survey-likert', 
+        preamble: '<img src="'+selected_images_a+'" width="50%" height="50%"></img>', 
+        questions: [question_pool], 
+        labels: [scale], 
+        data: { correct_response: 'No' },
+        }; 
+
+    experiment.push(likert_trial_3);
+
+ 
+
+  var debrief_block = {
+    type: "text",
+    text: function() {
+      
+      return "<p>Your survey code is: <strong></p>" +
+      subject_id + "<p></strong>You press any key complete the "+
+      "experiment.</p>";
+    }
+  };
+
+
+ experiment.push(debrief_block);
+
+  jsPsych.init({ 
+        display_element: $('#jspsych-target'),
+        show_progress_bar: true, 
+        timeline: experiment,
+        fullscreen: true,
+        on_finish: function() {
+          $.ajax({
+          type: "POST",
+          url: "/experiment-data",
+          data: JSON.stringify(jsPsych.data.getData()),
+          contentType: "application/json"
+    })
+           .done(function() {
+           window.location.href = "finish";
+    })
+    .fail(function() {
+      alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+      window.location.href = "/";
+    })
+  }
+});
+
+</script> 
+
+</html>
+
+
+

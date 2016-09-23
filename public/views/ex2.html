@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Rutgers- Codas experiment</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="../../jspsych/jspsych.js"></script>
+        <script src="../../jspsych/jquery.min.js"></script>
+        <script src="../../jspsych/jquery-ui.min.js"></script>
+        <script src="../../jspsych/plugins/jspsych-text.js"></script>
+        <script src="../../jspsych/plugins/jspsych-survey-likert.js"></script>
+
+        <link href="../../jspsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <link href="../../jspsych/css/jquery-ui.css" rel="stylesheet" type="text/css"></link>
+
+        <!-- CREATING ARRAY OF IMAGES -->
+            <script type="text/javascript">
+    var img_A_Array;
+    var WordFile = new XMLHttpRequest();
+        WordFile.open("GET", "img_A.txt", false);
+        WordFile.onreadystatechange =
+            function () {
+            if(WordFile.readyState === 4)
+                {
+                    if(WordFile.status === 200 || WordFile.status == 0)
+                        {
+                            img_A_Array = WordFile.responseText.split("\n");
+                        }
+                }
+        };
+        WordFile.send(null);
+    </script>
+
+    <script type="text/javascript">
+    var img_B_Array;
+    var WordFile = new XMLHttpRequest();
+        WordFile.open("GET", "img_B.txt", false);
+        WordFile.onreadystatechange =
+            function () {
+            if(WordFile.readyState === 4)
+                {
+                    if(WordFile.status === 200 || WordFile.status == 0)
+                        {
+                            img_A_Array = WordFile.responseText.split("\n");
+                        }
+                }
+        };
+        WordFile.send(null);
+    </script>
+
+     <!-- END CREATING ARRAY OF IMAGES -->
+
+
+    
+  </head>
+  <body>
+            <center> <img src="../../public/img/indoors.png" width="50%" height="50%"> </center>
+
+    <div id="jspsych-target"></div>
+  </body>
+  <script>
+
+  // defining groups of questions that will go together.
+  var page_1_questions = ["I like vegetables.", "I hate eggs."];
+
+  // defining two different response scales that can be used.
+  var scale_1 = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
+
+  var likert_block = {
+      type: 'survey-likert',
+      questions: ["I like vegetables.", "I like fruit."],
+      labels: [scale_1, scale_1], // need one scale for every question on a page
+  };
+
+  jsPsych.init({
+    display_element: $('#jspsych-target'),
+    timeline: [likert_block],
+    on_finish: function() { jsPsych.data.displayData(); }
+  });
+
+
+  </script>
+</html>
+
+
+
